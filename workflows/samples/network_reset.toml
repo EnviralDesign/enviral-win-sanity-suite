@@ -1,0 +1,13 @@
+name = "Network Reset"
+
+[[steps]]
+action_ref = "network.flush_dns"
+on_fail = "continue"
+
+[[steps]]
+action_ref = "network.renew_ip"
+on_fail = "stop"
+
+[[steps]]
+action_ref = "network.winsock_reset"
+on_fail = "continue"

@@ -1,0 +1,15 @@
+name = "Fix Port 3010"
+
+[[steps]]
+action_ref = "ports.scan_port"
+on_fail = "stop"
+
+[[steps]]
+action_ref = "ports.kill_pid"
+[steps.params]
+pid = 0
+on_fail = "stop"
+
+[[steps]]
+action_ref = "ports.scan_port"
+on_fail = "continue"

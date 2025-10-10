@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+app/__init__.py
+app/__main__.py
+app/main.py
+windows_sanity_suite.egg-info/PKG-INFO
+windows_sanity_suite.egg-info/SOURCES.txt
+windows_sanity_suite.egg-info/dependency_links.txt
+windows_sanity_suite.egg-info/requires.txt
+windows_sanity_suite.egg-info/top_level.txt
