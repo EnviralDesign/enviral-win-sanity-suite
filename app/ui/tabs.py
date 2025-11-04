@@ -93,6 +93,31 @@ def build_workflows_tab(parent: str) -> None:
         dpg.add_text("Workflow runner placeholder")
 
 
+def build_processes_tab(parent: str) -> None:
+    with dpg.group(parent=parent):
+        dpg.add_text("Process Handle Monitor")
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="Refresh", tag="processes_refresh_button")
+            dpg.add_button(label="Copy Report", tag="processes_copy_button")
+        dpg.add_separator()
+
+        with dpg.table(
+            tag="processes_table",
+            header_row=True,
+            borders_innerH=True,
+            borders_innerV=True,
+            borders_outerH=True,
+            borders_outerV=True,
+            row_background=True,
+        ):
+            dpg.add_table_column(label="Process Name")
+            dpg.add_table_column(label="PID")
+            dpg.add_table_column(label="Handles")
+            dpg.add_table_column(label="Path")
+
+        dpg.add_text("", tag="processes_status_text")
+
+
 def build_settings_tab(parent: str) -> None:
     with dpg.group(parent=parent):
         dpg.add_text("Settings placeholder")
@@ -102,6 +127,7 @@ __all__ = [
     "build_dashboard_tab",
     "build_ports_tab",
     "build_network_tab",
+    "build_processes_tab",
     "build_services_tab",
     "build_hosts_tab",
     "build_workflows_tab",

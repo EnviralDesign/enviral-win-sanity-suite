@@ -13,6 +13,7 @@ from .core import admin as admin_core
 from .core.logging import configure_logging
 from .network import NetworkController
 from .ports import PortsController
+from .processes import ProcessesController
 from .ui.layout import LayoutHandles, WindowState, create_main_window, sync_layout_to_viewport
 from .ui.navigation import NavigationController, TabDefinition
 from .ui.tabs import (
@@ -20,6 +21,7 @@ from .ui.tabs import (
     build_hosts_tab,
     build_network_tab,
     build_ports_tab,
+    build_processes_tab,
     build_services_tab,
     build_settings_tab,
     build_workflows_tab,
@@ -53,6 +55,7 @@ async def _async_main() -> None:
             TabDefinition("dashboard", "Dashboard", build_dashboard_tab),
             TabDefinition("ports", "Ports", build_ports_tab),
             TabDefinition("network", "Network", build_network_tab),
+            TabDefinition("processes", "Processes", build_processes_tab),
             TabDefinition("services", "Services", build_services_tab),
             TabDefinition("hosts", "Hosts", build_hosts_tab),
             TabDefinition("workflows", "Workflows", build_workflows_tab),
@@ -61,6 +64,7 @@ async def _async_main() -> None:
     )
     PortsController()
     NetworkController(is_admin=is_admin)
+    ProcessesController()
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.set_primary_window(handles.root_window, True)

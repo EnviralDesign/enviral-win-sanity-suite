@@ -1,0 +1,1 @@
+always use uv for python stuff
