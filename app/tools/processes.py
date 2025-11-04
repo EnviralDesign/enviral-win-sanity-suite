@@ -17,7 +17,7 @@ class ProcessHandleInfo:
     path: str
 
 
-def get_top_processes_by_handles(limit: int = 12) -> List[ProcessHandleInfo]:
+def get_top_processes_by_handles(limit: int = 25) -> List[ProcessHandleInfo]:
     """Return the top processes by handle count (Windows only)."""
 
     if platform.system() != "Windows":
