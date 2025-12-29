@@ -1,0 +1,60 @@
+[package]
+name = "sanity-suite"
+version = "0.1.0"
+edition = "2021"
+description = "Windows diagnostic and quick-fix utility suite"
+authors = ["EnviralDesign"]
+license = "MIT"
+
+[dependencies]
+# UI Framework - Dioxus with desktop rendering
+dioxus = { version = "0.6", features = ["desktop"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full", "process"] }
+
+# System information (processes, etc)
+sysinfo = "0.32"
+
+# TCP/UDP socket enumeration
+netstat2 = "0.10"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Icon support for desktop
+image = "0.25"
+
+# Clipboard
+arboard = "3"
+
+# Find executables in PATH
+which = "7"
+
+# Config directories
+dirs = "6"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+[build-dependencies]
+winres = "0.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = 3
+
+[profile.dev]
+opt-level = 0
+debug = true
