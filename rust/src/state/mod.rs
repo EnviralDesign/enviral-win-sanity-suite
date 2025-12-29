@@ -127,6 +127,9 @@ pub enum CurrentPage {
     Network,
     Docker,
     Services,
+    Processes,
+    Hosts,
+    Disk,
 }
 
 /// Global application state that persists across tab switches
@@ -201,4 +204,61 @@ pub struct ServicesPageState {
     pub selected_service: String,
     /// Cached service list
     pub services: Vec<crate::system::services::ServiceInfo>,
+}
+
+/// Processes page state
+#[derive(Debug, Clone, Default)]
+pub struct ProcessesPageState {
+    pub status_message: String,
+    pub status_type: String,
+    pub is_running: bool,
+    pub running_action: String,
+    /// Process list
+    pub processes: Vec<crate::system::processes::ProcessInfo>,
+    /// System overview
+    pub system_info: crate::system::processes::SystemOverview,
+    /// Sort mode: "memory" or "cpu"
+    pub sort_by: String,
+    /// Selected process PID
+    pub selected_pid: Option<u32>,
+}
+
+impl ProcessesPageState {
+    pub fn new() -> Self {
+        Self {
+            sort_by: "memory".to_string(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Hosts page state
+#[derive(Debug, Clone, Default)]
+pub struct HostsPageState {
+    pub status_message: String,
+    pub status_type: String,
+    pub is_running: bool,
+    /// Raw hosts file content
+    pub raw_content: String,
+    /// Parsed entries
+    pub entries: Vec<crate::system::hosts::HostEntry>,
+    /// New entry IP
+    pub new_ip: String,
+    /// New entry hostname
+    pub new_hostname: String,
+    /// Selected hostname
+    pub selected_hostname: String,
+}
+
+/// Disk page state
+#[derive(Debug, Clone, Default)]
+pub struct DiskPageState {
+    pub status_message: String,
+    pub status_type: String,
+    pub is_running: bool,
+    pub running_action: String,
+    /// Disk drives
+    pub disks: Vec<crate::system::disk::DiskInfo>,
+    /// Temp folder sizes
+    pub temp_folders: Vec<crate::system::disk::FolderSize>,
 }

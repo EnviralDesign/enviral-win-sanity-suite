@@ -38,6 +38,21 @@ pub fn Sidebar(
             icon: "⚙️",
             label: "Services",
         },
+        NavItem {
+            id: CurrentPage::Processes,
+            icon: "📊",
+            label: "Processes",
+        },
+        NavItem {
+            id: CurrentPage::Hosts,
+            icon: "📝",
+            label: "Hosts",
+        },
+        NavItem {
+            id: CurrentPage::Disk,
+            icon: "💾",
+            label: "Disk",
+        },
     ];
 
     rsx! {

@@ -701,4 +701,66 @@ body {
     letter-spacing: 0.05em;
     margin-bottom: var(--space-md);
 }
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.stat-card-warning {
+    border-color: var(--warning);
+    background: var(--warning-muted);
+}
+
+.stat-card-danger {
+    border-color: var(--error);
+    background: var(--error-muted);
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Progress Bar */
+.progress-bar {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: var(--space-xs);
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.stat-card-warning .progress-fill {
+    background: var(--warning);
+}
+
+.stat-card-danger .progress-fill {
+    background: var(--error);
+}
 "#;
