@@ -4,7 +4,7 @@
 //! and quick fixes, built in Rust with Dioxus.
 
 #![allow(non_snake_case)]
-#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+#![windows_subsystem = "windows"]
 
 mod state;
 mod system;
@@ -13,6 +13,19 @@ mod ui;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::ui::App;
+
+/// Load the window icon from embedded bytes
+fn load_window_icon() -> Option<dioxus::desktop::tao::window::Icon> {
+    // Include the icon at compile time
+    let icon_bytes = include_bytes!("../assets/icon.jpg");
+    
+    // Decode the JPEG image
+    let img = image::load_from_memory(icon_bytes).ok()?;
+    let rgba = img.to_rgba8();
+    let (width, height) = rgba.dimensions();
+    
+    dioxus::desktop::tao::window::Icon::from_rgba(rgba.into_raw(), width, height).ok()
+}
 
 fn main() {
     // Initialize logging
@@ -30,6 +43,9 @@ fn main() {
     let is_admin = system::admin::is_elevated();
     tracing::info!("Running as admin: {}", is_admin);
 
+    // Load window icon
+    let window_icon = load_window_icon();
+
     // Launch the application
     dioxus::LaunchBuilder::desktop()
         .with_cfg(
@@ -41,6 +57,7 @@ fn main() {
                         } else {
                             "Sanity Suite"
                         })
+                        .with_window_icon(window_icon)
                         .with_inner_size(dioxus::desktop::LogicalSize::new(1100.0, 700.0))
                         .with_min_inner_size(dioxus::desktop::LogicalSize::new(800.0, 500.0)),
                 )
@@ -50,3 +67,4 @@ fn main() {
         )
         .launch(App);
 }
+

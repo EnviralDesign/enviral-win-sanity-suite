@@ -4,12 +4,43 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Source of a port binding - where it was detected from
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum BindingSource {
+    /// Standard Windows TCP stack (netstat2)
+    #[default]
+    Windows,
+    /// Docker container via port forwarding
+    Docker,
+    /// WSL2 distro (non-Docker)
+    Wsl,
+    /// Detected via socket probe but source unknown
+    UnknownShadow,
+}
+
+impl BindingSource {
+    /// Get a human-readable description
+    pub fn description(&self) -> &'static str {
+        match self {
+            BindingSource::Windows => "Windows",
+            BindingSource::Docker => "Docker",
+            BindingSource::Wsl => "WSL",
+            BindingSource::UnknownShadow => "Shadow",
+        }
+    }
+
+    /// Check if this binding can be killed directly
+    pub fn can_kill(&self) -> bool {
+        matches!(self, BindingSource::Windows)
+    }
+}
+
 /// Represents a TCP port binding with process information
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PortBinding {
-    /// Process ID
+    /// Process ID (0 for Docker/WSL bindings without direct PID)
     pub pid: u32,
-    /// Process name
+    /// Process name (or container name for Docker)
     pub process_name: String,
     /// Local IP address
     pub local_ip: String,
@@ -25,6 +56,12 @@ pub struct PortBinding {
     pub is_orphan: bool,
     /// Whether this is a system/kernel socket (PID 0 or 4)
     pub is_system: bool,
+    /// Source of this binding detection
+    #[serde(default)]
+    pub source: BindingSource,
+    /// Additional context (e.g., Docker container ID, WSL distro name)
+    #[serde(default)]
+    pub source_detail: String,
 }
 
 impl PortBinding {
@@ -46,12 +83,19 @@ impl PortBinding {
 
     /// Get process status description
     pub fn process_status(&self) -> &'static str {
-        if self.is_system {
-            "System/Kernel"
-        } else if self.is_orphan {
-            "Orphaned"
-        } else {
-            "Active"
+        match self.source {
+            BindingSource::Docker => "Docker",
+            BindingSource::Wsl => "WSL",
+            BindingSource::UnknownShadow => "Shadow",
+            BindingSource::Windows => {
+                if self.is_system {
+                    "System/Kernel"
+                } else if self.is_orphan {
+                    "Orphaned"
+                } else {
+                    "Active"
+                }
+            }
         }
     }
 }
@@ -65,6 +109,44 @@ pub struct PortScanResult {
     pub conflict_pids: Vec<u32>,
     /// PIDs that are orphaned (socket exists but process doesn't)
     pub orphan_pids: Vec<u32>,
+    /// Docker containers using this port
+    pub docker_bindings: Vec<DockerPortBinding>,
+    /// WSL processes using this port
+    pub wsl_bindings: Vec<WslPortBinding>,
+    /// True if socket probe detected the port is in use but no visible binding found
+    pub shadow_detected: bool,
+}
+
+/// Docker container port binding
+#[derive(Debug, Clone, Default)]
+pub struct DockerPortBinding {
+    /// Container ID (short)
+    pub container_id: String,
+    /// Container name
+    pub container_name: String,
+    /// Image name
+    pub image: String,
+    /// Host port
+    pub host_port: u16,
+    /// Container port
+    pub container_port: u16,
+    /// Protocol (tcp/udp)
+    pub protocol: String,
+}
+
+/// WSL process port binding
+#[derive(Debug, Clone, Default)]
+pub struct WslPortBinding {
+    /// WSL distro name
+    pub distro: String,
+    /// Process name inside WSL
+    pub process_name: String,
+    /// PID inside WSL
+    pub pid: u32,
+    /// Port number
+    pub port: u16,
+    /// Local address
+    pub local_addr: String,
 }
 
 /// Represents a network adapter with its addresses

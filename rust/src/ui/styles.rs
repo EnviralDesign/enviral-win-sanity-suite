@@ -763,4 +763,96 @@ body {
 .stat-card-danger .progress-fill {
     background: var(--error);
 }
+
+/* ========================================
+   Port Scanner - Source Badges
+   ======================================== */
+
+/* Base badge style */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.badge-windows {
+    background: var(--accent-muted);
+    color: var(--accent-secondary);
+    border: 1px solid var(--accent-primary);
+}
+
+.badge-docker {
+    background: rgba(0, 123, 255, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(0, 123, 255, 0.4);
+}
+
+.badge-wsl {
+    background: rgba(255, 165, 0, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(255, 165, 0, 0.4);
+}
+
+.badge-warning {
+    background: var(--warning-muted);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+/* Row highlighting for different sources */
+.data-table tr.docker td {
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.data-table tr.docker:hover td {
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.data-table tr.wsl td {
+    background: rgba(255, 165, 0, 0.05);
+}
+
+.data-table tr.wsl:hover td {
+    background: rgba(255, 165, 0, 0.1);
+}
+
+.data-table tr.shadow td {
+    background: rgba(128, 128, 128, 0.1);
+}
+
+.data-table tr.shadow:hover td {
+    background: rgba(128, 128, 128, 0.15);
+}
+
+/* Info status bar (for Docker/WSL detection) */
+.status-bar.info {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #60a5fa;
+}
+
+.status-bar code {
+    font-family: var(--font-mono);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Hint text for action guidance */
+.hint {
+    cursor: help;
+    font-size: 12px;
+}
+
+.hint:hover {
+    text-decoration: underline dotted;
+}
 "#;
+
