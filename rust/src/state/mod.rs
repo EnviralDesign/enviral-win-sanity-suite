@@ -214,6 +214,58 @@ pub enum CurrentPage {
     Disk,
 }
 
+/// Sort column options for ports table
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PortsSortColumn {
+    #[default]
+    Source,
+    Pid,
+    Process,
+    Address,
+    State,
+    Scope,
+}
+
+/// Sort column options for services table
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ServicesSortColumn {
+    #[default]
+    Name,
+    DisplayName,
+    Status,
+    StartType,
+}
+
+/// Sort column options for processes table
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ProcessesSortColumn {
+    #[default]
+    Memory,
+    Pid,
+    Name,
+    Handles,
+    Cpu,
+    Status,
+}
+
+/// Sort column options for hosts table
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum HostsSortColumn {
+    #[default]
+    Status,
+    Ip,
+    Hostname,
+}
+
+/// Sort column options for disk temp folders table
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DiskSortColumn {
+    #[default]
+    Folder,
+    Size,
+    Files,
+}
+
 /// Global application state that persists across tab switches
 #[derive(Debug, Clone, Default)]
 pub struct PortsPageState {
@@ -222,6 +274,10 @@ pub struct PortsPageState {
     pub status_message: String,
     pub status_type: String,
     pub is_scanning: bool,
+    /// Current sort column
+    pub sort_column: Option<PortsSortColumn>,
+    /// Sort direction (true = ascending)
+    pub sort_ascending: bool,
 }
 
 impl PortsPageState {
@@ -286,6 +342,10 @@ pub struct ServicesPageState {
     pub selected_service: String,
     /// Cached service list
     pub services: Vec<crate::system::services::ServiceInfo>,
+    /// Current sort column
+    pub sort_column: Option<ServicesSortColumn>,
+    /// Sort direction (true = ascending)
+    pub sort_ascending: bool,
 }
 
 /// Processes page state
@@ -303,6 +363,10 @@ pub struct ProcessesPageState {
     pub sort_by: String,
     /// Selected process PID
     pub selected_pid: Option<u32>,
+    /// Current sort column for table header clicks
+    pub sort_column: Option<ProcessesSortColumn>,
+    /// Sort direction (true = ascending)
+    pub sort_ascending: bool,
 }
 
 impl ProcessesPageState {
@@ -330,6 +394,10 @@ pub struct HostsPageState {
     pub new_hostname: String,
     /// Selected hostname
     pub selected_hostname: String,
+    /// Current sort column
+    pub sort_column: Option<HostsSortColumn>,
+    /// Sort direction (true = ascending)
+    pub sort_ascending: bool,
 }
 
 /// Disk page state
@@ -343,4 +411,9 @@ pub struct DiskPageState {
     pub disks: Vec<crate::system::disk::DiskInfo>,
     /// Temp folder sizes
     pub temp_folders: Vec<crate::system::disk::FolderSize>,
+    /// Current sort column
+    pub sort_column: Option<DiskSortColumn>,
+    /// Sort direction (true = ascending)
+    pub sort_ascending: bool,
 }
+

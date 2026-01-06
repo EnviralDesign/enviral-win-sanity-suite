@@ -4,8 +4,22 @@
 
 use dioxus::prelude::*;
 
-use crate::state::DiskPageState;
+use crate::state::{DiskPageState, DiskSortColumn};
 use crate::system::disk;
+use crate::ui::components::{SortableHeader, StaticHeader, SortDirection};
+
+fn update_disk_sort(mut state: Signal<DiskPageState>, column: DiskSortColumn) {
+    let mut s = state.write();
+    if s.sort_column == Some(column) {
+        s.sort_ascending = !s.sort_ascending;
+    } else {
+        s.sort_column = Some(column);
+        match column {
+             DiskSortColumn::Size | DiskSortColumn::Files => s.sort_ascending = false,
+             _ => s.sort_ascending = true,
+        }
+    }
+}
 
 /// Disk page
 #[component]
@@ -60,7 +74,30 @@ pub fn DiskPage(is_admin: bool) -> Element {
         });
     };
 
+
+
     let current_state = state();
+
+    // Sort temp folders based on current sort state
+    let mut sorted_folders = current_state.temp_folders.clone();
+    if let Some(sort_col) = current_state.sort_column {
+        let asc = current_state.sort_ascending;
+        sorted_folders.sort_by(|a, b| {
+            let cmp = match sort_col {
+                DiskSortColumn::Folder => a.path.to_lowercase().cmp(&b.path.to_lowercase()),
+                DiskSortColumn::Size => a.size_mb.partial_cmp(&b.size_mb).unwrap_or(std::cmp::Ordering::Equal),
+                DiskSortColumn::Files => a.file_count.cmp(&b.file_count),
+            };
+            if asc { cmp } else { cmp.reverse() }
+        });
+    }
+
+    // Determine sort direction for display
+    let sort_dir = if current_state.sort_ascending {
+        SortDirection::Ascending
+    } else {
+        SortDirection::Descending
+    };
 
     rsx! {
         header { class: "page-header",
@@ -123,14 +160,32 @@ pub fn DiskPage(is_admin: bool) -> Element {
                         table { class: "data-table",
                             thead {
                                 tr {
-                                    th { "Folder" }
-                                    th { "Size" }
-                                    th { "Files" }
-                                    th { "Actions" }
+                                    SortableHeader {
+                                        column: DiskSortColumn::Folder,
+                                        label: "Folder".to_string(),
+                                        current_sort: current_state.sort_column,
+                                        direction: sort_dir,
+                                        on_sort: move |col| update_disk_sort(state, col),
+                                    }
+                                    SortableHeader {
+                                        column: DiskSortColumn::Size,
+                                        label: "Size".to_string(),
+                                        current_sort: current_state.sort_column,
+                                        direction: sort_dir,
+                                        on_sort: move |col| update_disk_sort(state, col),
+                                    }
+                                    SortableHeader {
+                                        column: DiskSortColumn::Files,
+                                        label: "Files".to_string(),
+                                        current_sort: current_state.sort_column,
+                                        direction: sort_dir,
+                                        on_sort: move |col| update_disk_sort(state, col),
+                                    }
+                                    StaticHeader { label: "Actions".to_string() }
                                 }
                             }
                             tbody {
-                                for folder in current_state.temp_folders.iter() {
+                                for folder in sorted_folders.iter() {
                                     {
                                         let path = folder.path.clone();
                                         let path_for_click = path.clone();

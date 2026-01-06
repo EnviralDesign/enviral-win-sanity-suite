@@ -4,8 +4,19 @@
 
 use dioxus::prelude::*;
 
-use crate::state::ServicesPageState;
+use crate::state::{ServicesPageState, ServicesSortColumn};
 use crate::system::services;
+use crate::ui::components::{OutputPanel, SortableHeader, StaticHeader, SortDirection};
+
+fn update_service_sort(mut state: Signal<ServicesPageState>, column: ServicesSortColumn) {
+    let mut s = state.write();
+    if s.sort_column == Some(column) {
+        s.sort_ascending = !s.sort_ascending;
+    } else {
+        s.sort_column = Some(column);
+        s.sort_ascending = true;
+    }
+}
 
 /// Services page with Windows service management
 #[component]
@@ -187,9 +198,33 @@ pub fn ServicesPage(is_admin: bool) -> Element {
         s.status_type = String::new();
     };
 
+
+
     // Read current state
     let current_state = state();
     let outputs_for_panel = current_state.command_outputs.clone();
+
+    // Sort services based on current sort state
+    let mut sorted_services = current_state.services.clone();
+    if let Some(sort_col) = current_state.sort_column {
+        let asc = current_state.sort_ascending;
+        sorted_services.sort_by(|a, b| {
+            let cmp = match sort_col {
+                ServicesSortColumn::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+                ServicesSortColumn::DisplayName => a.display_name.to_lowercase().cmp(&b.display_name.to_lowercase()),
+                ServicesSortColumn::Status => a.status.cmp(&b.status),
+                ServicesSortColumn::StartType => a.start_type.cmp(&b.start_type),
+            };
+            if asc { cmp } else { cmp.reverse() }
+        });
+    }
+
+    // Determine sort direction for display
+    let sort_dir = if current_state.sort_ascending {
+        SortDirection::Ascending
+    } else {
+        SortDirection::Descending
+    };
 
     rsx! {
         // Page header
@@ -229,7 +264,7 @@ pub fn ServicesPage(is_admin: bool) -> Element {
                 }
 
                 // Service list section
-                if !current_state.services.is_empty() {
+                if !sorted_services.is_empty() {
                     div { class: "section",
                         h3 { class: "section-title", 
                             "Services ({current_state.services.len()})" 
@@ -238,15 +273,39 @@ pub fn ServicesPage(is_admin: bool) -> Element {
                             table { class: "data-table",
                                 thead {
                                     tr {
-                                        th { "" }
-                                        th { "Name" }
-                                        th { "Display Name" }
-                                        th { "Status" }
-                                        th { "Start Type" }
+                                        StaticHeader { label: "".to_string() }
+                                        SortableHeader {
+                                            column: ServicesSortColumn::Name,
+                                            label: "Name".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_service_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ServicesSortColumn::DisplayName,
+                                            label: "Display Name".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_service_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ServicesSortColumn::Status,
+                                            label: "Status".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_service_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ServicesSortColumn::StartType,
+                                            label: "Start Type".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_service_sort(state, col),
+                                        }
                                     }
                                 }
                                 tbody {
-                                    for svc in current_state.services.iter() {
+                                    for svc in sorted_services.iter() {
                                         {
                                             let is_selected = current_state.selected_service == svc.name;
                                             let svc_name = svc.name.clone();
@@ -346,10 +405,11 @@ pub fn ServicesPage(is_admin: bool) -> Element {
             }
 
             // Fixed output panel at bottom
-            crate::ui::components::OutputPanel {
+            OutputPanel {
                 outputs: outputs_for_panel,
                 on_clear: move |_| on_clear(()),
             }
         }
     }
 }
+

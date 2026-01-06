@@ -854,5 +854,109 @@ body {
 .hint:hover {
     text-decoration: underline dotted;
 }
+
+/* ========================================
+   Sortable Table Headers
+   ======================================== */
+
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.sortable-header:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.sortable-header.active {
+    background: var(--accent-muted);
+    color: var(--accent-secondary);
+}
+
+.sort-indicator {
+    font-size: 10px;
+    margin-left: 4px;
+    opacity: 0.8;
+}
+
+/* ========================================
+   Expanded Output Panel (Reading Mode)
+   ======================================== */
+
+.output-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.output-panel-expanded {
+    width: 100%;
+    max-width: 1200px;
+    height: 90vh;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(99, 102, 241, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.output-panel-expanded .output-panel-header {
+    flex-shrink: 0;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.output-panel-content-expanded {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.output-panel-content-expanded .output-text {
+    font-size: 14px;
+    line-height: 1.6;
+}
 "#;
+
 

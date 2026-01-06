@@ -4,8 +4,21 @@
 
 use dioxus::prelude::*;
 
-use crate::state::{BindingSource, PortBinding, PortScanResult, PortsPageState};
+use crate::state::{BindingSource, PortBinding, PortScanResult, PortsPageState, PortsSortColumn};
 use crate::system::ports;
+use crate::ui::components::{SortableHeader, StaticHeader, SortDirection};
+
+fn update_port_sort(mut state: Signal<PortsPageState>, column: PortsSortColumn) {
+     let mut s = state.write();
+        if s.sort_column == Some(column) {
+            // Toggle direction
+            s.sort_ascending = !s.sort_ascending;
+        } else {
+            // New column, default to ascending
+            s.sort_column = Some(column);
+            s.sort_ascending = true;
+        }
+}
 
 /// Ports page with port scanning and process killing
 #[component]
@@ -230,8 +243,34 @@ pub fn PortsPage(is_admin: bool) -> Element {
         s.status_type = String::new();
     };
 
+
+
     // Read current state
     let current_state = state();
+    
+    // Sort bindings based on current sort state
+    let mut sorted_bindings = current_state.scan_result.bindings.clone();
+    if let Some(sort_col) = current_state.sort_column {
+        let asc = current_state.sort_ascending;
+        sorted_bindings.sort_by(|a, b| {
+            let cmp = match sort_col {
+                PortsSortColumn::Source => a.source.description().cmp(b.source.description()),
+                PortsSortColumn::Pid => a.pid.cmp(&b.pid),
+                PortsSortColumn::Process => a.process_name.to_lowercase().cmp(&b.process_name.to_lowercase()),
+                PortsSortColumn::Address => a.address().cmp(&b.address()),
+                PortsSortColumn::State => a.state.cmp(&b.state),
+                PortsSortColumn::Scope => a.scope_description().cmp(b.scope_description()),
+            };
+            if asc { cmp } else { cmp.reverse() }
+        });
+    }
+
+    // Determine sort direction for display
+    let sort_dir = if current_state.sort_ascending {
+        SortDirection::Ascending
+    } else {
+        SortDirection::Descending
+    };
 
     rsx! {
         // Page header
@@ -337,17 +376,53 @@ pub fn PortsPage(is_admin: bool) -> Element {
                 table { class: "data-table",
                     thead {
                         tr {
-                            th { "Source" }
-                            th { "PID" }
-                            th { "Process" }
-                            th { "Local Address" }
-                            th { "State" }
-                            th { "Scope" }
-                            th { "Actions" }
+                            SortableHeader {
+                                column: PortsSortColumn::Source,
+                                label: "Source".to_string(),
+                                current_sort: current_state.sort_column,
+                                direction: sort_dir,
+                                on_sort: move |col| update_port_sort(state, col),
+                            }
+                            SortableHeader {
+                                column: PortsSortColumn::Pid,
+                                label: "PID".to_string(),
+                                current_sort: current_state.sort_column,
+                                direction: sort_dir,
+                                on_sort: move |col| update_port_sort(state, col),
+                            }
+                            SortableHeader {
+                                column: PortsSortColumn::Process,
+                                label: "Process".to_string(),
+                                current_sort: current_state.sort_column,
+                                direction: sort_dir,
+                                on_sort: move |col| update_port_sort(state, col),
+                            }
+                            SortableHeader {
+                                column: PortsSortColumn::Address,
+                                label: "Local Address".to_string(),
+                                current_sort: current_state.sort_column,
+                                direction: sort_dir,
+                                on_sort: move |col| update_port_sort(state, col),
+                            }
+                            SortableHeader {
+                                column: PortsSortColumn::State,
+                                label: "State".to_string(),
+                                current_sort: current_state.sort_column,
+                                direction: sort_dir,
+                                on_sort: move |col| update_port_sort(state, col),
+                            }
+                            SortableHeader {
+                                column: PortsSortColumn::Scope,
+                                label: "Scope".to_string(),
+                                current_sort: current_state.sort_column,
+                                direction: sort_dir,
+                                on_sort: move |col| update_port_sort(state, col),
+                            }
+                            StaticHeader { label: "Actions".to_string() }
                         }
                     }
                     tbody {
-                        for binding in current_state.scan_result.bindings.iter().cloned() {
+                        for binding in sorted_bindings.iter().cloned() {
                             PortRow {
                                 binding: binding.clone(),
                                 is_conflict: current_state.scan_result.conflict_pids.contains(&binding.pid),

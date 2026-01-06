@@ -4,8 +4,19 @@
 
 use dioxus::prelude::*;
 
-use crate::state::HostsPageState;
+use crate::state::{HostsPageState, HostsSortColumn};
 use crate::system::hosts;
+use crate::ui::components::{SortableHeader, StaticHeader, SortDirection};
+
+fn update_host_sort(mut state: Signal<HostsPageState>, column: HostsSortColumn) {
+    let mut s = state.write();
+    if s.sort_column == Some(column) {
+        s.sort_ascending = !s.sort_ascending;
+    } else {
+        s.sort_column = Some(column);
+        s.sort_ascending = true;
+    }
+}
 
 /// Hosts page
 #[component]
@@ -143,7 +154,34 @@ pub fn HostsPage(is_admin: bool) -> Element {
         });
     };
 
+
+
     let current_state = state();
+
+    // Sort entries based on current sort state
+    let mut sorted_entries = current_state.entries.clone();
+    if let Some(sort_col) = current_state.sort_column {
+        let asc = current_state.sort_ascending;
+        sorted_entries.sort_by(|a, b| {
+            let cmp = match sort_col {
+                HostsSortColumn::Status => {
+                    let a_status = if a.enabled { "Active" } else { "Disabled" };
+                    let b_status = if b.enabled { "Active" } else { "Disabled" };
+                    a_status.cmp(b_status)
+                },
+                HostsSortColumn::Ip => a.ip.cmp(&b.ip),
+                HostsSortColumn::Hostname => a.hostname.cmp(&b.hostname),
+            };
+            if asc { cmp } else { cmp.reverse() }
+        });
+    }
+
+    // Determine sort direction for display
+    let sort_dir = if current_state.sort_ascending {
+        SortDirection::Ascending
+    } else {
+        SortDirection::Descending
+    };
 
     rsx! {
         header { class: "page-header",
@@ -216,15 +254,33 @@ pub fn HostsPage(is_admin: bool) -> Element {
                             table { class: "data-table",
                                 thead {
                                     tr {
-                                        th { "" }
-                                        th { "Status" }
-                                        th { "IP" }
-                                        th { "Hostname" }
-                                        th { "Comment" }
+                                        StaticHeader { label: "".to_string() }
+                                        SortableHeader {
+                                            column: HostsSortColumn::Status,
+                                            label: "Status".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_host_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: HostsSortColumn::Ip,
+                                            label: "IP".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_host_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: HostsSortColumn::Hostname,
+                                            label: "Hostname".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_host_sort(state, col),
+                                        }
+                                        StaticHeader { label: "Comment".to_string() }
                                     }
                                 }
                                 tbody {
-                                    for entry in current_state.entries.iter() {
+                                    for entry in sorted_entries.iter() {
                                         {
                                             let is_selected = current_state.selected_hostname == entry.hostname;
                                             let hostname = entry.hostname.clone();

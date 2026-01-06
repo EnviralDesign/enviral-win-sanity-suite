@@ -4,8 +4,26 @@
 
 use dioxus::prelude::*;
 
-use crate::state::ProcessesPageState;
+use crate::state::{ProcessesPageState, ProcessesSortColumn};
 use crate::system::processes;
+use crate::ui::components::{SortableHeader, StaticHeader, SortDirection};
+
+fn update_process_sort(mut state: Signal<ProcessesPageState>, column: ProcessesSortColumn) {
+    let mut s = state.write();
+    if s.sort_column == Some(column) {
+        s.sort_ascending = !s.sort_ascending;
+    } else {
+        s.sort_column = Some(column);
+        s.sort_ascending = true;
+        
+        // Default sort direction logic override
+        match column {
+            ProcessesSortColumn::Memory | ProcessesSortColumn::Cpu | 
+            ProcessesSortColumn::Handles => s.sort_ascending = false,
+            _ => {}
+        }
+    }
+}
 
 /// Processes page
 #[component]
@@ -79,7 +97,33 @@ pub fn ProcessesPage(is_admin: bool) -> Element {
         });
     };
 
+
+
     let current_state = state();
+    
+    // Sort processes based on current sort state (local sort of the fetched list)
+    let mut sorted_processes = current_state.processes.clone();
+    if let Some(sort_col) = current_state.sort_column {
+        let asc = current_state.sort_ascending;
+        sorted_processes.sort_by(|a, b| {
+            let cmp = match sort_col {
+                ProcessesSortColumn::Pid => a.pid.cmp(&b.pid),
+                ProcessesSortColumn::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+                ProcessesSortColumn::Memory => a.memory_mb.partial_cmp(&b.memory_mb).unwrap_or(std::cmp::Ordering::Equal),
+                ProcessesSortColumn::Handles => a.handle_count.cmp(&b.handle_count),
+                ProcessesSortColumn::Cpu => a.cpu_percent.partial_cmp(&b.cpu_percent).unwrap_or(std::cmp::Ordering::Equal),
+                ProcessesSortColumn::Status => a.status.cmp(&b.status),
+            };
+            if asc { cmp } else { cmp.reverse() }
+        });
+    }
+
+    // Determine sort direction for display
+    let sort_dir = if current_state.sort_ascending {
+        SortDirection::Ascending
+    } else {
+        SortDirection::Descending
+    };
 
     rsx! {
         header { class: "page-header",
@@ -115,7 +159,7 @@ pub fn ProcessesPage(is_admin: bool) -> Element {
                     h3 { class: "section-title", "View" }
                     div { class: "action-bar",
                         div { class: "action-bar-group",
-                            label { "Sort by:" }
+                            label { "Fetch Top 50 By:" }
                             select {
                                 class: "input",
                                 value: "{current_state.sort_by}",
@@ -148,24 +192,60 @@ pub fn ProcessesPage(is_admin: bool) -> Element {
                 }
 
                 // Process list
-                if !current_state.processes.is_empty() {
+                if !sorted_processes.is_empty() {
                     div { class: "section",
-                        h3 { class: "section-title", "Top Processes" }
+                        h3 { class: "section-title", "Process List" }
                         div { class: "service-list",
                             table { class: "data-table",
                                 thead {
                                     tr {
-                                        th { "" }
-                                        th { "PID" }
-                                        th { "Name" }
-                                        th { "Memory" }
-                                        th { "Handles" }
-                                        th { "CPU %" }
-                                        th { "Status" }
+                                        StaticHeader { label: "".to_string() }
+                                        SortableHeader {
+                                            column: ProcessesSortColumn::Pid,
+                                            label: "PID".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_process_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ProcessesSortColumn::Name,
+                                            label: "Name".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_process_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ProcessesSortColumn::Memory,
+                                            label: "Memory".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_process_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ProcessesSortColumn::Handles,
+                                            label: "Handles".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_process_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ProcessesSortColumn::Cpu,
+                                            label: "CPU %".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_process_sort(state, col),
+                                        }
+                                        SortableHeader {
+                                            column: ProcessesSortColumn::Status,
+                                            label: "Status".to_string(),
+                                            current_sort: current_state.sort_column,
+                                            direction: sort_dir,
+                                            on_sort: move |col| update_process_sort(state, col),
+                                        }
                                     }
                                 }
                                 tbody {
-                                    for proc in current_state.processes.iter() {
+                                    for proc in sorted_processes.iter() {
                                         {
                                             let is_selected = current_state.selected_pid == Some(proc.pid);
                                             let pid = proc.pid;
