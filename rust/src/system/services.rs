@@ -3,39 +3,8 @@
 //! List, start, and stop Windows services.
 
 use crate::state::CommandOutput;
-use std::process::Stdio;
-use std::time::Instant;
+use crate::system::command::run_powershell;
 
-/// Run a PowerShell command and capture output
-async fn run_powershell(command: &str) -> CommandOutput {
-    let start = Instant::now();
-
-    let result = tokio::process::Command::new("powershell")
-        .args(["-NoProfile", "-Command", command])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .await;
-
-    let duration_ms = start.elapsed().as_millis() as u64;
-
-    match result {
-        Ok(output) => CommandOutput {
-            command: format!("powershell: {}", command),
-            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-            exit_code: output.status.code().unwrap_or(-1),
-            duration_ms,
-        },
-        Err(e) => CommandOutput {
-            command: format!("powershell: {}", command),
-            stdout: String::new(),
-            stderr: format!("Failed to execute: {}", e),
-            exit_code: -1,
-            duration_ms,
-        },
-    }
-}
 
 /// Service info from Get-Service
 #[derive(Debug, Clone, Default)]

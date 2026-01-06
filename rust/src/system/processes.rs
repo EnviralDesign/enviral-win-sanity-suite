@@ -2,8 +2,9 @@
 //!
 //! List processes by handle count, memory, CPU usage.
 
+use crate::system::command::hidden_command_sync;
 use sysinfo::{ProcessesToUpdate, System};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 /// Process info for display
 #[derive(Debug, Clone, Default)]
@@ -76,7 +77,7 @@ ForEach-Object {
 }
 "#;
 
-    let output = Command::new("powershell")
+    let output = hidden_command_sync("powershell")
         .args(["-NoProfile", "-Command", ps_script])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

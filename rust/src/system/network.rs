@@ -3,41 +3,9 @@
 //! Network diagnostics and quick-fix commands.
 
 use crate::state::{CommandOutput, NetworkAdapter};
-use std::process::Stdio;
-use std::time::Instant;
+use crate::system::command::run_command;
 use sysinfo::Networks;
 
-/// Run a command and capture output
-async fn run_command(program: &str, args: &[&str]) -> CommandOutput {
-    let command_str = format!("{} {}", program, args.join(" "));
-    let start = Instant::now();
-
-    let result = tokio::process::Command::new(program)
-        .args(args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .await;
-
-    let duration_ms = start.elapsed().as_millis() as u64;
-
-    match result {
-        Ok(output) => CommandOutput {
-            command: command_str,
-            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-            exit_code: output.status.code().unwrap_or(-1),
-            duration_ms,
-        },
-        Err(e) => CommandOutput {
-            command: command_str,
-            stdout: String::new(),
-            stderr: format!("Failed to execute: {}", e),
-            exit_code: -1,
-            duration_ms,
-        },
-    }
-}
 
 /// Flush DNS cache
 pub async fn flush_dns() -> CommandOutput {

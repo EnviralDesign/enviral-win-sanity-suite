@@ -4,9 +4,11 @@
 //! Supports multi-layer detection: Windows TCP stack, Docker, and WSL.
 
 use crate::state::{BindingSource, DockerPortBinding, PortBinding, PortScanResult, WslPortBinding};
+use crate::system::command::hidden_command;
 use netstat2::{get_sockets_info, AddressFamilyFlags, ProtocolFlags, ProtocolSocketInfo};
 use std::collections::HashSet;
 use std::net::{TcpListener, SocketAddr};
+use std::process::Stdio;
 use sysinfo::System;
 
 /// Test if a port is actually in use at the kernel level via socket probe
@@ -41,10 +43,7 @@ pub fn probe_port_in_use(port: u16) -> bool {
 
 /// Check if Docker Desktop is running
 pub async fn is_docker_running() -> bool {
-    use std::process::Stdio;
-    use tokio::process::Command;
-    
-    match Command::new("docker")
+    match hidden_command("docker")
         .args(["info"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -58,10 +57,7 @@ pub async fn is_docker_running() -> bool {
 
 /// Get Docker container port mappings for a specific port
 pub async fn get_docker_port_bindings(port: u16) -> Vec<DockerPortBinding> {
-    use std::process::Stdio;
-    use tokio::process::Command;
-    
-    let output = match Command::new("docker")
+    let output = match hidden_command("docker")
         .args(["ps", "--format", "{{.ID}}|{{.Names}}|{{.Image}}|{{.Ports}}"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -133,10 +129,7 @@ fn parse_docker_port_mapping(mapping: &str, target_port: u16) -> Option<(u16, u1
 
 /// Get list of running WSL distros
 pub async fn get_running_wsl_distros() -> Vec<String> {
-    use std::process::Stdio;
-    use tokio::process::Command;
-    
-    let output = match Command::new("wsl")
+    let output = match hidden_command("wsl")
         .args(["--list", "--running", "--quiet"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -164,16 +157,13 @@ pub async fn get_running_wsl_distros() -> Vec<String> {
 
 /// Get WSL port bindings for a specific port across all running distros
 pub async fn get_wsl_port_bindings(port: u16) -> Vec<WslPortBinding> {
-    use std::process::Stdio;
-    use tokio::process::Command;
-    
     let distros = get_running_wsl_distros().await;
     let mut bindings = Vec::new();
     
     for distro in distros {
         // Run ss -tlnp inside WSL to get listening ports
         // Format: State  Recv-Q Send-Q  Local Address:Port   Peer Address:Port  Process
-        let output = match Command::new("wsl")
+        let output = match hidden_command("wsl")
             .args(["-d", &distro, "--", "ss", "-tlnp"])
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -490,11 +480,8 @@ pub fn suggest_free_port(start: u16, end: u16) -> Option<u16> {
 /// 
 /// Note: Truly orphaned sockets often require a system restart to clear.
 pub async fn force_close_socket(binding: &PortBinding) -> Result<String, String> {
-    use std::process::Stdio;
-    use tokio::process::Command;
-
     // First, check http.sys URL reservations for this port
-    let urlacl_result = Command::new("netsh")
+    let urlacl_result = hidden_command("netsh")
         .args(["http", "show", "urlacl"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -523,7 +510,7 @@ pub async fn force_close_socket(binding: &PortBinding) -> Result<String, String>
     }
 
     // Check http.sys service state
-    let servicestate_result = Command::new("netsh")
+    let servicestate_result = hidden_command("netsh")
         .args(["http", "show", "servicestate", "view=requestq"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
